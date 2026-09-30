@@ -21,6 +21,20 @@ window.THERAPY_CONFIG = {
   // Leave empty to hide the WhatsApp button.
   orderWhatsApp: "",
   franchisePhone: "+91 96008 41622",
+
+  // Live ordering. Orders are sent through ntfy (https://ntfy.sh), a free
+  // push-notification service — no server or account needed.
+  //  • Staff install the "ntfy" app and subscribe to `topic` to get alerts.
+  //  • Staff open staff.html on the counter tablet/phone to manage orders.
+  // Change `topic` to any new random string to "reset" the order channel.
+  orders: {
+    enabled: true,
+    server: "https://ntfy.sh",
+    topic: "therapy-hangova-g2br2nio6m18",
+    dineIn: true,    // table orders (QR per table: https://hangova.in/?table=5)
+    takeaway: true,  // parcel / pick-up at the counter
+    etaChoices: [5, 10, 15, 20, 30], // minutes staff can pick when accepting
+  },
   instagram: "therapy_dessertcart",
   cities: ["Chennai", "Bangalore", "Hyderabad", "Vizag", "Vijayawada", "Madurai", "Tirupur"],
 };

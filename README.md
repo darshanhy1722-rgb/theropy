@@ -12,6 +12,22 @@ A fast, mobile-first menu web app for **Therapy — Desserts & More**. It's plai
 - Deep links to any item, e.g. `index.html#basque`. These are handy for Instagram stories or QR codes
 - Locations, franchise contact, Instagram and allergen fine print in the footer
 
+## Live ordering (dine-in & takeaway)
+Customers can order straight from the menu, and the cafe gets them instantly.
+
+**Customer:** Add items → **Place order** → choose **Dine-in** (table number) or **Takeaway** (name) → add a note if needed → the order is sent.
+A live tracker then shows **Sent → Preparing (with a ready-in time) → Ready → Enjoy**, with a sound and vibration when the order is ready. Payment happens at the counter.
+
+**Cafe staff:**
+1. Open **`/staff.html`** (e.g. `https://hangova.in/staff.html`) on the counter tablet or phone and tap **Start receiving orders**.
+   New orders appear with a chime that repeats until someone accepts them. Staff tap *Accept · 10′* → *Mark ready* → *Served/Collected*, or *Cancel order* with a reason.
+2. For alerts on phones, even when they're locked, install the free **ntfy** app ([Android](https://play.google.com/store/apps/details?id=io.heckel.ntfy) / [iPhone](https://apps.apple.com/app/ntfy/id1625396347)) and subscribe to the topic shown in the staff page's ⚙️ setup.
+3. **Table QR codes:** link each table to `https://hangova.in/?table=5`, which pre-fills table 5. For takeaway, use the plain link.
+
+**Settings** live in `menu.js` → `THERAPY_CONFIG.orders`: turn dine-in or takeaway on and off, change the ETA choices, or set a new `topic` to reset the channel.
+
+**Limits of this free setup:** it uses [ntfy.sh](https://ntfy.sh), so there's no server or login. The topic name is inside the public site code, so anyone technical could read or fake orders. That's why the app only asks for a table number or first name, and payment stays at the counter. ntfy.sh keeps orders for about 12 hours; the staff page keeps today's list on its own device. For online payments, delivery or accounts, move to a real backend such as Firebase or Supabase.
+
 ## Run locally
 ```bash
 python3 -m http.server 8000

@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Therapy — Orders (Staff)</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#2b1a11" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600&family=League+Spartan:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="staff.css" />
+</head>
+<body class="staff">
+  <header class="s-top">
+    <div class="s-brand">
+      <svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><use href="#logo-mark" /></svg>
+      <div><b>THERAPY</b><span>Order desk</span></div>
+    </div>
+    <div class="s-stats" aria-label="Today">
+      <div><strong id="statActive">0</strong><span>active</span></div>
+      <div><strong id="statToday">0</strong><span>today</span></div>
+      <div><strong id="statSales">₹0</strong><span>sales</span></div>
+    </div>
+    <div class="s-tools">
+      <span class="conn" id="conn" data-state="connecting"><i></i><span>Connecting…</span></span>
+      <button class="icon-btn" id="soundBtn" aria-pressed="true" title="Sound on/off">🔔</button>
+      <button class="icon-btn" id="setupBtn" title="Setup & phone alerts">⚙️</button>
+    </div>
+  </header>
+
+  <nav class="s-filter" role="radiogroup" aria-label="Filter orders">
+    <button class="chip is-active" data-f="all">All</button>
+    <button class="chip" data-f="dinein">🍽️ Dine-in</button>
+    <button class="chip" data-f="takeaway">🛍️ Takeaway</button>
+  </nav>
+
+  <main class="board">
+    <section class="col" data-col="new">
+      <h2>New <span class="badge" id="countNew">0</span></h2>
+      <div class="cards" id="colNew"><p class="col-empty">No new orders. Waiting… ☕</p></div>
+    </section>
+    <section class="col" data-col="preparing">
+      <h2>Preparing <span class="badge" id="countPreparing">0</span></h2>
+      <div class="cards" id="colPreparing"><p class="col-empty">Nothing in the kitchen.</p></div>
+    </section>
+    <section class="col" data-col="ready">
+      <h2>Ready <span class="badge" id="countReady">0</span></h2>
+      <div class="cards" id="colReady"><p class="col-empty">Nothing waiting for pickup.</p></div>
+    </section>
+  </main>
+
+  <details class="history">
+    <summary>Completed &amp; cancelled today <span class="badge" id="countDone">0</span></summary>
+    <div class="history-list" id="colDone"></div>
+  </details>
+
+  <!-- Start / setup overlay -->
+  <dialog class="sheet" id="startSheet" aria-labelledby="startTitle">
+    <form method="dialog" class="sheet-inner s-setup">
+      <div class="drawer-head">
+        <h3 id="startTitle">Order desk</h3>
+        <p>Keep this page open on the counter phone or tablet. New orders appear here instantly with a sound.</p>
+      </div>
+      <div class="setup-body">
+        <ol class="setup-steps">
+          <li><b>Tap “Start receiving orders”</b>. This turns on the sound and keeps the screen awake.</li>
+          <li><b>Get alerts on your phone too</b> (even when it's locked): install the free <b>ntfy</b> app
+            (<a href="https://play.google.com/store/apps/details?id=io.heckel.ntfy" target="_blank" rel="noopener">Android</a> ·
+            <a href="https://apps.apple.com/app/ntfy/id1625396347" target="_blank" rel="noopener">iPhone</a>),
+            tap <b>+</b> and subscribe to this topic:
+            <span class="topic"><code id="topicName"></code><button type="button" class="mini" id="copyTopic">Copy</button></span>
+          </li>
+          <li><b>Put a QR code on each table</b> that links to the menu with the table number, e.g.
+            <code id="tableLink"></code>. For takeaway, use the plain menu link.</li>
+        </ol>
+        <p class="setup-warn">ℹ️ This is a simple setup with no login. The topic name lives in the website code, so treat orders as public: collect only a table number or first name, and take payment at the counter.</p>
+      </div>
+      <div class="sheet-foot column">
+        <button type="button" class="btn btn-gold btn-block" id="startBtn">Start receiving orders</button>
+        <button type="button" class="btn btn-ghost-dark btn-block" id="testBtn">Send a test alert to phones</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Reject reason -->
+  <dialog class="sheet" id="rejectSheet" aria-labelledby="rejectTitle">
+    <form method="dialog" class="sheet-inner">
+      <div class="drawer-head">
+        <h3 id="rejectTitle">Cancel order <span id="rejectCode"></span>?</h3>
+        <p>The customer will see this reason.</p>
+      </div>
+      <div class="setup-body">
+        <div class="reason-list" id="reasonList">
+          <button type="button" class="chip">Item sold out</button>
+          <button type="button" class="chip">Kitchen closing</button>
+          <button type="button" class="chip">Please order at the counter</button>
+          <button type="button" class="chip">Duplicate order</button>
+        </div>
+        <label class="field"><span>Reason</span><input id="rejectReason" maxlength="80" placeholder="Optional" /></label>
+      </div>
+      <div class="sheet-foot">
+        <button value="cancel" class="btn btn-ghost-dark">Keep order</button>
+        <button type="button" class="btn btn-danger btn-wide" id="rejectConfirm">Cancel order</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="logo-mark" viewBox="0 0 64 64">
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M8 58V30a24 24 0 0 1 48 0v28" /><path d="M14 58V30a18 18 0 0 1 36 0v28" />
+        <path d="M20 58V31a12 12 0 0 1 17-11" /><path d="M40 8c6 4 9 10 8 18-6-2-10-7-8-18Z" />
+        <path d="M18 44l22-9 8 4v9H18z" /><path d="M18 44v10h30V48" />
+        <path d="M22 44c0 3 3 3 3 0M29 41c0 3 3 3 3 0M36 38c0 3 3 3 3 0" /><path d="M6 58h52" />
+      </g>
+    </symbol>
+  </svg>
+
+  <script src="menu.js"></script>
+  <script src="orders.js"></script>
+  <script src="staff.js"></script>
+</body>
+</html>

@@ -150,13 +150,14 @@
       <button class="sheet-close" value="cancel" aria-label="Close">✕</button>
       <div class="drawer-head">
         <h3 id="cartTitle">Your order</h3>
-        <p>Show this to our team at the counter, or share it.</p>
+        <p id="cartSub">Show this to our team at the counter, or share it.</p>
       </div>
       <ul class="cart-list" id="cartList"></ul>
       <p class="cart-empty" id="cartEmpty">Your order is empty — go treat yourself. 🍰</p>
       <div class="sheet-foot column" id="cartFoot">
         <div class="cart-total"><span>Total</span><strong id="cartTotal">₹0</strong></div>
         <p class="cart-taxnote">Final bill may include applicable taxes.</p>
+        <button type="button" class="btn btn-gold btn-block" id="cartCheckout" hidden>Place order →</button>
         <div class="cart-actions">
           <button type="button" class="btn btn-ghost-dark" id="cartClear">Clear</button>
           <button type="button" class="btn btn-ghost-dark" id="cartShare">Share / copy</button>
@@ -165,6 +166,70 @@
       </div>
     </form>
   </dialog>
+
+  <!-- Checkout -->
+  <dialog class="sheet drawer" id="checkoutSheet" aria-labelledby="checkoutTitle">
+    <form class="sheet-inner" id="checkoutForm" novalidate>
+      <button type="button" class="sheet-close" data-close aria-label="Close">✕</button>
+      <div class="drawer-head">
+        <h3 id="checkoutTitle">Checkout</h3>
+        <p>We'll send your order straight to the kitchen.</p>
+      </div>
+      <div class="checkout-body">
+        <div class="seg" role="radiogroup" aria-label="Order type" id="orderType">
+          <label><input type="radio" name="otype" value="dinein" /><span>🍽️ Dine-in<small>Served at your table</small></span></label>
+          <label><input type="radio" name="otype" value="takeaway" /><span>🛍️ Takeaway<small>Collect at the counter</small></span></label>
+        </div>
+        <label class="field" id="fieldTable">
+          <span>Table number</span>
+          <input type="text" inputmode="numeric" name="table" maxlength="4" placeholder="e.g. 5" autocomplete="off" />
+          <small>Find it on the QR stand on your table.</small>
+        </label>
+        <label class="field" id="fieldName" hidden>
+          <span>Your name</span>
+          <input type="text" name="name" maxlength="30" placeholder="So we can call you when it's ready" autocomplete="given-name" />
+        </label>
+        <label class="field">
+          <span>Note for the kitchen <em>(optional)</em></span>
+          <textarea name="note" rows="2" maxlength="160" placeholder="Less sweet, extra sauce, birthday candle…"></textarea>
+        </label>
+        <div class="checkout-summary" id="checkoutSummary"></div>
+        <p class="form-error" id="checkoutError" role="alert" hidden></p>
+      </div>
+      <div class="sheet-foot column">
+        <button type="submit" class="btn btn-gold btn-block" id="checkoutSubmit">Place order</button>
+        <p class="cart-taxnote center">💳 Pay at the counter — cash, card or UPI.</p>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Order tracking -->
+  <dialog class="sheet drawer" id="trackSheet" aria-labelledby="trackTitle">
+    <form method="dialog" class="sheet-inner">
+      <button class="sheet-close" value="cancel" aria-label="Close">✕</button>
+      <div class="track-hero">
+        <p class="eyebrow">Your order</p>
+        <h3 id="trackTitle" class="track-code">—</h3>
+        <p class="track-where" id="trackWhere"></p>
+      </div>
+      <ol class="steps" id="trackSteps">
+        <li data-step="0"><i></i><span>Sent</span></li>
+        <li data-step="1"><i></i><span>Preparing</span></li>
+        <li data-step="2"><i></i><span>Ready</span></li>
+        <li data-step="3"><i></i><span>Enjoy!</span></li>
+      </ol>
+      <p class="track-msg" id="trackMsg"></p>
+      <ul class="track-lines" id="trackLines"></ul>
+      <div class="sheet-foot column">
+        <button type="button" class="btn btn-ghost-dark btn-block" id="trackDone">Start a new order</button>
+        <p class="cart-taxnote center" id="trackLive">Live updates on — keep this page open.</p>
+      </div>
+    </form>
+  </dialog>
+
+  <button class="track-pill" id="trackPill" hidden>
+    <span class="pulse"></span><span id="trackPillText">Order sent</span><b>Track →</b>
+  </button>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -185,6 +250,7 @@
   </svg>
 
   <script src="menu.js"></script>
+  <script src="orders.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

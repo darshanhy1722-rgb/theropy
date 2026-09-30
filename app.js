@@ -2,6 +2,7 @@
   "use strict";
 
   const CFG = window.THERAPY_CONFIG;
+  const ORDERS = window.TherapyOrders || { enabled: false };
   const MENU = window.THERAPY_MENU;
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
@@ -257,6 +258,10 @@
     $("#cartEmpty").hidden = lines.length > 0;
     $("#cartFoot").hidden = lines.length === 0;
     $("#cartTotal").textContent = money(cartTotal());
+    if (ORDERS.enabled) {
+      $("#cartCheckout").hidden = false;
+      $("#cartSub").textContent = "Order right here — we'll bring it to your table or pack it to go.";
+    }
     const wa = $("#cartWhatsApp");
     if (CFG.orderWhatsApp) {
       wa.hidden = false;
@@ -277,6 +282,8 @@
     $("#orderBarCount").textContent = `${count} ${count === 1 ? "item" : "items"}`;
     $("#orderBarTotal").textContent = money(cartTotal());
     INDEX.forEach((_, id) => refreshCTA(id));
+    const pill = $("#trackPill");
+    if (pill) pill.classList.toggle("raised", !!count);
     if (cartSheet.open) renderCart();
   }
 
@@ -304,6 +311,186 @@
     if (!key || !cart[key]) return;
     addLine(cart[key].id, cart[key].choices, inc ? 1 : -1);
   });
+
+
+  /* ---------------- live ordering ---------------- */
+  const checkoutSheet = $("#checkoutSheet");
+  const trackSheet = $("#trackSheet");
+  const ACTIVE_KEY = "therapy-active-order-v1";
+  const OCFG = ORDERS.config || {};
+  const tableFromUrl = (new URLSearchParams(location.search).get("table") || "").replace(/\D/g, "").slice(0, 4);
+  let active = null;          // { order, status, eta, statusAt }
+  let stopTracking = null;
+
+  const loadActive = () => { try { return JSON.parse(localStorage.getItem(ACTIVE_KEY)); } catch { return null; } };
+  const saveActive = () => { try { active ? localStorage.setItem(ACTIVE_KEY, JSON.stringify(active)) : localStorage.removeItem(ACTIVE_KEY); } catch { /* ignore */ } };
+
+  function orderType() { return ($("input[name=otype]:checked", checkoutSheet) || {}).value; }
+  function syncOrderType() {
+    const t = orderType();
+    $("#fieldTable").hidden = t !== "dinein";
+    $("#fieldName").hidden = t !== "takeaway";
+  }
+
+  function openCheckout() {
+    if (!cartCount()) return;
+    const form = $("#checkoutForm");
+    const types = $$("input[name=otype]", form);
+    types[0].closest("label").hidden = OCFG.dineIn === false;
+    types[1].closest("label").hidden = OCFG.takeaway === false;
+    if (!orderType()) {
+      const preferred = OCFG.dineIn === false ? "takeaway" : "dinein";
+      $(`input[name=otype][value=${preferred}]`, form).checked = true;
+    }
+    if (tableFromUrl && !form.table.value) form.table.value = tableFromUrl;
+    syncOrderType();
+    const count = cartCount();
+    $("#checkoutSummary").innerHTML = `<span>${count} item${count > 1 ? "s" : ""}</span><strong>${money(cartTotal())}</strong>`;
+    $("#checkoutError").hidden = true;
+    cartSheet.close();
+    checkoutSheet.showModal();
+  }
+
+  $("#cartCheckout").addEventListener("click", openCheckout);
+  $("#orderType").addEventListener("change", syncOrderType);
+  $("[data-close]", checkoutSheet).addEventListener("click", () => checkoutSheet.close());
+
+  $("#checkoutForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const type = orderType();
+    const err = $("#checkoutError");
+    const table = form.table.value.replace(/\D/g, "");
+    const name = form.name.value.trim();
+    const fail = (msg, field) => { err.textContent = msg; err.hidden = false; field && field.focus(); };
+    if (type === "dinein" && !table) return fail("Please enter your table number.", form.table);
+    if (type === "takeaway" && !name) return fail("Please enter your name so we can call you.", form.name);
+
+    const lines = Object.values(cart).map((l) => {
+      const { item } = INDEX.get(l.id);
+      const opts = l.choices.filter(Boolean).join(", ");
+      return { n: item.name, o: opts || undefined, q: l.qty, p: unitPrice(item, l.choices), d: item.diet };
+    });
+    const btn = $("#checkoutSubmit");
+    btn.disabled = true;
+    btn.textContent = "Sending to the kitchen…";
+    err.hidden = true;
+    try {
+      const order = await ORDERS.placeOrder({
+        type,
+        table: type === "dinein" ? table : undefined,
+        name: type === "takeaway" ? name : undefined,
+        note: form.note.value.trim() || undefined,
+        lines,
+        total: cartTotal(),
+      });
+      active = { order, status: "new", statusAt: order.at };
+      saveActive();
+      cart = {}; store.save(cart); refreshCart();
+      form.note.value = "";
+      checkoutSheet.close();
+      startTracking();
+      openTrack();
+      if ("Notification" in window && Notification.permission === "default") Notification.requestPermission().catch(() => {});
+    } catch {
+      fail("Couldn't reach the cafe — check your internet and try again, or order at the counter.");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Place order";
+    }
+  });
+
+  const TRACK_MSG = {
+    new: () => "Waiting for the cafe to confirm your order…",
+    preparing: (a) => `Confirmed! We're preparing it${a.eta ? ` — ready in about ${a.eta} min` : ""}. 👩‍🍳`,
+    ready: (a) => a.order.type === "dinein" ? "Your order is ready and on its way to your table! 🎉" : "Your order is ready — please collect it at the counter! 🎉",
+    completed: () => "Enjoy your treats! Thank you for visiting Therapy. 💛",
+    rejected: (a) => `Sorry, we couldn't take this order${a.reason ? `: ${a.reason}` : ""}. Please check with our team at the counter.`,
+  };
+
+  function renderTrack() {
+    if (!active) return;
+    const { order, status } = active;
+    $("#trackTitle").textContent = order.code;
+    $("#trackWhere").textContent = order.type === "dinein" ? `Dine-in · Table ${order.table}` : `Takeaway · ${order.name}`;
+    const step = ORDERS.STATUS[status] ? ORDERS.STATUS[status].step : 0;
+    $$("#trackSteps li").forEach((li) => {
+      const n = +li.dataset.step;
+      li.classList.toggle("done", step >= 0 && n < step);
+      li.classList.toggle("current", n === step);
+    });
+    $("#trackSteps").classList.toggle("rejected", status === "rejected");
+    $("#trackMsg").textContent = TRACK_MSG[status](active);
+    $("#trackMsg").dataset.status = status;
+    $("#trackLines").innerHTML = order.lines.map((l) =>
+      `<li><span>${l.q} × ${esc(l.n)}${l.o ? ` <em>(${esc(l.o)})</em>` : ""}</span><b>${money(l.q * l.p)}</b></li>`).join("") +
+      `<li class="total"><span>Total · pay at counter</span><b>${money(order.total)}</b></li>`;
+    const finished = status === "completed" || status === "rejected";
+    $("#trackDone").textContent = finished ? "Start a new order" : "Order more";
+    $("#trackLive").hidden = finished;
+    const pill = $("#trackPill");
+    pill.hidden = finished;
+    pill.dataset.status = status;
+    $("#trackPillText").textContent = `${order.code} · ${ORDERS.STATUS[status].label}`;
+    const bar = $("#orderBar");
+    pill.classList.toggle("raised", !bar.hidden);
+  }
+
+  function openTrack() { renderTrack(); trackSheet.showModal(); }
+  $("#trackPill").addEventListener("click", openTrack);
+  $("#trackDone").addEventListener("click", () => {
+    if (active && (active.status === "completed" || active.status === "rejected")) {
+      stopTracking && stopTracking();
+      active = null; saveActive();
+      $("#trackPill").hidden = true;
+    }
+    trackSheet.close();
+  });
+
+  function alertCustomer(status) {
+    const msg = TRACK_MSG[status](active);
+    toast(status === "ready" ? "🎉 Your order is ready!" : msg);
+    if (navigator.vibrate) navigator.vibrate(status === "ready" ? [200, 100, 200, 100, 400] : 200);
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      [0, 0.18].forEach((t, i) => {
+        const o = ctx.createOscillator(); const g = ctx.createGain();
+        o.frequency.value = i ? 1175 : 880; o.connect(g); g.connect(ctx.destination);
+        g.gain.setValueAtTime(0.0001, ctx.currentTime + t);
+        g.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + t + 0.3);
+        o.start(ctx.currentTime + t); o.stop(ctx.currentTime + t + 0.32);
+      });
+    } catch { /* audio blocked */ }
+    if (document.hidden && "Notification" in window && Notification.permission === "granted") {
+      try { new Notification(`Therapy · ${active.order.code}`, { body: msg, tag: active.order.code }); } catch { /* ignore */ }
+    }
+  }
+
+  function startTracking() {
+    if (!active || !ORDERS.enabled) return;
+    stopTracking && stopTracking();
+    renderTrack();
+    stopTracking = ORDERS.subscribe(ORDERS.topics.order(active.order.key), (msg) => {
+      let ev;
+      try { ev = JSON.parse(msg.message); } catch { return; }
+      if (ev.kind !== "status" || ev.key !== active.order.key || !ORDERS.STATUS[ev.status]) return;
+      if (ev.at && ev.at <= active.statusAt) return; // already applied (history replay after reload)
+      const changed = ev.status !== active.status;
+      Object.assign(active, { status: ev.status, statusAt: ev.at || Date.now(), eta: ev.eta || active.eta, reason: ev.reason });
+      saveActive();
+      renderTrack();
+      if (changed) alertCustomer(ev.status);
+    }, { since: "all" });
+  }
+
+  // Resume tracking after a reload (orders older than 12h are dropped).
+  function resumeOrders() {
+    active = loadActive();
+    if (active && (!active.order || Date.now() - active.order.at > 12 * 3600e3)) { active = null; saveActive(); }
+    if (active) startTracking();
+    if (tableFromUrl && ORDERS.enabled) toast(`Welcome! Ordering for table ${tableFromUrl}`);
+  }
 
   /* ---------------- global clicks ---------------- */
   document.addEventListener("click", (e) => {
@@ -384,6 +571,7 @@
   refreshCart();
   setupScrollSpy();
   onScroll();
+  resumeOrders();
 
   // Deep link: /#basque opens that item.
   const hashId = location.hash.slice(1);
