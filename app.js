@@ -393,7 +393,7 @@
       openTrack();
       if ("Notification" in window && Notification.permission === "default") Notification.requestPermission().catch(() => {});
     } catch (ex) {
-      fail(`Couldn't reach the cafe — check your internet and try again, or order at the counter. (${ex && ex.message ? ex.message : "network error"})`);
+      fail(`Couldn't send your order — check your internet and try again, or order at the counter. (${ORDERS.explain(ex)})`);
       console.error("Order failed:", ex);
     } finally {
       btn.disabled = false;
@@ -472,17 +472,17 @@
     if (!active || !ORDERS.enabled) return;
     stopTracking && stopTracking();
     renderTrack();
-    stopTracking = ORDERS.subscribe(ORDERS.topics.order(active.order.key), (msg) => {
-      let ev;
-      try { ev = JSON.parse(msg.message); } catch { return; }
-      if (ev.kind !== "status" || ev.key !== active.order.key || !ORDERS.STATUS[ev.status]) return;
-      if (ev.at && ev.at <= active.statusAt) return; // already applied (history replay after reload)
-      const changed = ev.status !== active.status;
-      Object.assign(active, { status: ev.status, statusAt: ev.at || Date.now(), eta: ev.eta || active.eta, reason: ev.reason });
+    stopTracking = ORDERS.watchOrder(active.order.id, (o) => {
+      if (!ORDERS.STATUS[o.status]) return;
+      $("#trackLive").textContent = "Live updates on — keep this page open.";
+      const changed = o.status !== active.status;
+      Object.assign(active, { status: o.status, statusAt: o.statusAt, eta: o.eta, reason: o.reason });
       saveActive();
       renderTrack();
-      if (changed) alertCustomer(ev.status);
-    }, { since: "all" });
+      if (changed) alertCustomer(o.status);
+    }, () => {
+      $("#trackLive").textContent = "Reconnecting for live updates…";
+    });
   }
 
   // Resume tracking after a reload (orders older than 12h are dropped).

@@ -1,0 +1,45 @@
+rules_version = '2';
+
+// Copy this whole file into Firebase console → Firestore Database → Rules → Publish.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ✏️ Put the staff login emails here (lowercase). Create these accounts in
+    //    Firebase console → Authentication → Users BEFORE publishing the rules.
+    function isStaff() {
+      return request.auth != null
+        && request.auth.token.email != null
+        && request.auth.token.email.lower() in [
+          "change-me@example.com"
+        ];
+    }
+
+    function validNewOrder(d) {
+      return d.keys().hasOnly(['uid', 'code', 'type', 'table', 'name', 'note', 'lines', 'total', 'status', 'createdAt', 'at'])
+        && d.uid == request.auth.uid
+        && d.status == 'new'
+        && d.createdAt == request.time
+        && d.code is string && d.code.size() <= 8
+        && d.type in ['dinein', 'takeaway']
+        && (d.type != 'dinein' || (d.table is string && d.table.size() > 0 && d.table.size() <= 4))
+        && (d.type != 'takeaway' || (d.name is string && d.name.size() > 0 && d.name.size() <= 30))
+        && (!('note' in d) || (d.note is string && d.note.size() <= 160))
+        && d.lines is list && d.lines.size() > 0 && d.lines.size() <= 40
+        && d.total is number && d.total >= 0 && d.total <= 100000
+        && d.at is number;
+    }
+
+    match /orders/{orderId} {
+      // Customers (anonymous sign-in) can place orders…
+      allow create: if request.auth != null && validNewOrder(request.resource.data);
+      // …and follow only their own. Staff see everything.
+      allow get: if isStaff() || (request.auth != null && resource.data.uid == request.auth.uid);
+      allow list: if isStaff();
+      // Only staff move orders through the workflow.
+      allow update: if isStaff()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'eta', 'reason', 'statusAt'])
+        && request.resource.data.status in ['new', 'preparing', 'ready', 'completed', 'rejected'];
+      allow delete: if false;
+    }
+  }
+}

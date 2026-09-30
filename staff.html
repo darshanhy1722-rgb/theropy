@@ -57,32 +57,47 @@
     <div class="history-list" id="colDone"></div>
   </details>
 
-  <!-- Start / setup overlay -->
+  <!-- Start / login / setup -->
   <dialog class="sheet" id="startSheet" aria-labelledby="startTitle">
-    <form method="dialog" class="sheet-inner s-setup">
+    <div class="sheet-inner s-setup">
       <div class="drawer-head">
         <h3 id="startTitle">Order desk</h3>
         <p>Keep this page open on the counter phone or tablet. New orders appear here instantly with a sound.</p>
       </div>
       <div class="setup-body">
-        <ol class="setup-steps">
-          <li><b>Tap “Start receiving orders”</b>. This turns on the sound and keeps the screen awake.</li>
-          <li><b>Get alerts on your phone too</b> (even when it's locked): install the free <b>ntfy</b> app
-            (<a href="https://play.google.com/store/apps/details?id=io.heckel.ntfy" target="_blank" rel="noopener">Android</a> ·
-            <a href="https://apps.apple.com/app/ntfy/id1625396347" target="_blank" rel="noopener">iPhone</a>),
-            tap <b>+</b> and subscribe to this topic:
-            <span class="topic"><code id="topicName"></code><button type="button" class="mini" id="copyTopic">Copy</button></span>
-          </li>
-          <li><b>Put a QR code on each table</b> that links to the menu with the table number, e.g.
-            <code id="tableLink"></code>. For takeaway, use the plain menu link.</li>
-        </ol>
-        <p class="setup-warn">ℹ️ This is a simple setup with no login. The topic name lives in the website code, so treat orders as public: collect only a table number or first name, and take payment at the counter.</p>
+        <!-- shown when Firebase isn't configured yet -->
+        <div id="needSetup" hidden>
+          <p class="setup-warn">⚙️ Online ordering isn't connected yet. Add the Firebase settings to <code>menu.js</code> by following <b>FIREBASE_SETUP.md</b> in the repository.</p>
+        </div>
+        <!-- staff login -->
+        <form id="loginForm" class="login" hidden>
+          <label class="field"><span>Staff email</span><input type="email" name="email" autocomplete="username" required /></label>
+          <label class="field"><span>Password</span><input type="password" name="password" autocomplete="current-password" required /></label>
+          <p class="form-error" id="loginError" role="alert" hidden></p>
+          <button type="submit" class="btn btn-gold btn-block" id="loginBtn">Sign in &amp; start</button>
+        </form>
+        <!-- signed in -->
+        <div id="signedIn" hidden>
+          <p class="who">Signed in as <b id="whoEmail"></b> · <button type="button" class="linkish" id="signOutBtn">Sign out</button></p>
+          <div id="alertsSetup" hidden>
+            <h4>📱 Alerts on staff phones <em>(optional)</em></h4>
+            <ol class="setup-steps">
+              <li>Install the free <b>ntfy</b> app
+                (<a href="https://play.google.com/store/apps/details?id=io.heckel.ntfy" target="_blank" rel="noopener">Android</a> ·
+                <a href="https://apps.apple.com/app/ntfy/id1625396347" target="_blank" rel="noopener">iPhone</a>), tap <b>+</b> and subscribe to:
+                <span class="topic"><code id="topicName"></code><button type="button" class="mini" id="copyTopic">Copy</button></span></li>
+              <li>Turn this on for <b>one</b> device only (the counter tablet):
+                <label class="switch"><input type="checkbox" id="forwardToggle" /><span>Send new orders to staff phones from this device</span></label></li>
+            </ol>
+            <button type="button" class="btn btn-ghost-dark btn-block" id="testBtn">Send a test alert to phones</button>
+          </div>
+          <p class="setup-tip">🔳 <b>Table QR codes:</b> link each table to <code id="tableLink"></code> (change the number). For takeaway, use the plain menu link.</p>
+        </div>
       </div>
-      <div class="sheet-foot column">
+      <div class="sheet-foot column" id="startFoot" hidden>
         <button type="button" class="btn btn-gold btn-block" id="startBtn">Start receiving orders</button>
-        <button type="button" class="btn btn-ghost-dark btn-block" id="testBtn">Send a test alert to phones</button>
       </div>
-    </form>
+    </div>
   </dialog>
 
   <!-- Reject reason -->

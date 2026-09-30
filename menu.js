@@ -22,18 +22,23 @@ window.THERAPY_CONFIG = {
   orderWhatsApp: "",
   franchisePhone: "+91 96008 41622",
 
-  // Live ordering. Orders are sent through ntfy (https://ntfy.sh), a free
-  // push-notification service — no server or account needed.
-  //  • Staff install the "ntfy" app and subscribe to `topic` to get alerts.
-  //  • Staff open staff.html on the counter tablet/phone to manage orders.
-  // Change `topic` to any new random string to "reset" the order channel.
+  // Live ordering (dine-in & takeaway), stored in Firebase.
+  // Paste your Firebase web-app config below. Steps: FIREBASE_SETUP.md
+  // Until it's filled in, the menu works as before (no online ordering).
   orders: {
     enabled: true,
-    server: "https://ntfy.sh",
-    topic: "therapy-hangova-g2br2nio6m18",
+    firebase: {
+      apiKey: "",
+      authDomain: "",
+      projectId: "",
+      appId: "",
+    },
     dineIn: true,    // table orders (QR per table: <site link>/?table=5)
     takeaway: true,  // parcel / pick-up at the counter
     etaChoices: [5, 10, 15, 20, 30], // minutes staff can pick when accepting
+    // Optional: the staff desk forwards each new order to staff phones through
+    // the free ntfy app (subscribe to this topic). Set topic to "" to turn off.
+    phoneAlerts: { server: "https://ntfy.sh", topic: "therapy-hangova-g2br2nio6m18" },
   },
   instagram: "therapy_dessertcart",
   cities: ["Chennai", "Bangalore", "Hyderabad", "Vizag", "Vijayawada", "Madurai", "Tirupur"],
