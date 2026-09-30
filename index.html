@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Therapy — Desserts &amp; More | Menu</title>
+  <meta name="description" content="The full Therapy Desserts & More menu — tres leches, cakes, laban, croissants, waffles, sundaes, thick shakes and more." />
+  <meta name="theme-color" content="#2b1a11" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600&family=League+Spartan:wght@500;600;700;800&family=Great+Vibes&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Top bar -->
+  <header class="topbar" id="topbar">
+    <a class="brand" href="#top" aria-label="Therapy — back to top">
+      <svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><use href="#logo-mark" /></svg>
+      <span class="brand-text">
+        <span class="brand-name">THERAPY</span>
+        <span class="brand-sub">DESSERTS &amp; MORE</span>
+      </span>
+    </a>
+    <button class="cart-btn" id="cartOpen" aria-label="Open your order">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12l-1.2 11.1a2 2 0 0 1-2 1.9H9.2a2 2 0 0 1-2-1.9L6 7Z" /><path d="M9 7V6a3 3 0 0 1 6 0v1" /></svg>
+      <span class="cart-count" id="cartCount" hidden>0</span>
+    </button>
+  </header>
+
+  <main id="top">
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-pattern" aria-hidden="true"></div>
+      <div class="hero-inner">
+        <svg class="hero-logo" viewBox="0 0 64 64" aria-hidden="true"><use href="#logo-mark" /></svg>
+        <h1 class="hero-title">THERAPY</h1>
+        <p class="hero-sub">DESSERTS &amp; MORE</p>
+        <p class="hero-lede">Tres leches, Egyptian laban, flaky croissants and fudgy brownies — handcrafted sweet therapy, one spoon at a time.</p>
+        <div class="hero-cta">
+          <a class="btn btn-gold" href="#menu">Explore the menu</a>
+          <a class="btn btn-ghost" href="#cat-seasonal">🥭 Summer specials</a>
+        </div>
+        <ul class="hero-facts">
+          <li><strong id="factItems">50+</strong><span>treats</span></li>
+          <li><strong>7</strong><span>cities</span></li>
+          <li><strong>100%</strong><span>halal ingredients</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Signatures -->
+    <section class="signatures" aria-labelledby="sigTitle">
+      <div class="section-head center">
+        <p class="eyebrow">Must try</p>
+        <h2 id="sigTitle">Our <span class="script">Signatures</span></h2>
+      </div>
+      <div class="sig-row" id="sigRow"></div>
+    </section>
+
+    <!-- Menu toolbar -->
+    <div class="toolbar" id="menu">
+      <div class="toolbar-top">
+        <label class="search">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+          <input id="search" type="search" placeholder="Search waffles, Biscoff, mango…" autocomplete="off" aria-label="Search the menu" />
+        </label>
+        <div class="diet-filter" role="radiogroup" aria-label="Dietary filter">
+          <button class="chip is-active" data-diet="all" role="radio" aria-checked="true">All</button>
+          <button class="chip" data-diet="veg" role="radio" aria-checked="false"><i class="dot veg"></i>Veg</button>
+          <button class="chip" data-diet="egg" role="radio" aria-checked="false"><i class="dot egg"></i>Egg</button>
+          <button class="chip" data-diet="nonveg" role="radio" aria-checked="false"><i class="dot nonveg"></i>Non-veg</button>
+        </div>
+      </div>
+      <nav class="cat-nav" id="catNav" aria-label="Menu categories"></nav>
+    </div>
+
+    <!-- Menu -->
+    <div class="menu" id="menuRoot"></div>
+    <p class="empty" id="emptyState" hidden>No treats match that search. Try “chocolate” or “mango”.</p>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="legend">
+      <span><i class="dot veg"></i>Vegetarian</span>
+      <span><i class="dot egg"></i>Contains egg</span>
+      <span><i class="dot nonveg"></i>Non-vegetarian</span>
+      <span><b class="halal">H</b>Halal</span>
+    </div>
+    <p class="cities" id="cities"></p>
+    <div class="footer-links">
+      <a id="instaLink" href="#" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="1" /></svg>
+        <span id="instaHandle"></span>
+      </a>
+      <a id="franchiseLink" href="#">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2" /></svg>
+        <span>Franchise enquiries: <span id="franchisePhone"></span></span>
+      </a>
+    </div>
+    <ul class="fineprint">
+      <li>Many of our dishes contain lactose.</li>
+      <li>Some menu items are subject to seasonal availability.</li>
+      <li>We guarantee our ingredients meet halal certification standards.</li>
+      <li>Our dishes may contain or come into contact with common allergens.</li>
+      <li>Images are for representational purposes only and may not exactly reflect the final dish served.</li>
+      <li>Prices are in Indian Rupees and may be subject to applicable taxes.</li>
+    </ul>
+    <p class="copyright">© <span id="year"></span> Therapy — Desserts &amp; More</p>
+  </footer>
+
+  <!-- Floating order bar -->
+  <button class="order-bar" id="orderBar" hidden>
+    <span class="order-bar-count" id="orderBarCount">0 items</span>
+    <span class="order-bar-total" id="orderBarTotal">₹0</span>
+    <span class="order-bar-cta">View order →</span>
+  </button>
+
+  <!-- Item sheet -->
+  <dialog class="sheet" id="itemSheet" aria-labelledby="sheetTitle">
+    <form method="dialog" class="sheet-inner" id="sheetForm">
+      <button class="sheet-close" value="cancel" aria-label="Close">✕</button>
+      <div class="sheet-visual" id="sheetVisual"></div>
+      <div class="sheet-body">
+        <p class="sheet-cat" id="sheetCat"></p>
+        <h3 id="sheetTitle"></h3>
+        <div class="sheet-badges" id="sheetBadges"></div>
+        <p class="sheet-desc" id="sheetDesc"></p>
+        <div id="sheetOptions"></div>
+        <div class="sheet-note">
+          <strong>Good to know</strong>
+          <span>Contains dairy. May contain nuts, gluten &amp; other allergens — ask our team if you have an allergy.</span>
+        </div>
+      </div>
+      <div class="sheet-foot">
+        <div class="qty" aria-label="Quantity">
+          <button type="button" id="qtyMinus" aria-label="Decrease quantity">−</button>
+          <output id="qtyVal">1</output>
+          <button type="button" id="qtyPlus" aria-label="Increase quantity">+</button>
+        </div>
+        <button type="button" class="btn btn-gold btn-wide" id="sheetAdd">Add · ₹0</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Order drawer -->
+  <dialog class="sheet drawer" id="cartSheet" aria-labelledby="cartTitle">
+    <form method="dialog" class="sheet-inner">
+      <button class="sheet-close" value="cancel" aria-label="Close">✕</button>
+      <div class="drawer-head">
+        <h3 id="cartTitle">Your order</h3>
+        <p>Show this to our team at the counter, or share it.</p>
+      </div>
+      <ul class="cart-list" id="cartList"></ul>
+      <p class="cart-empty" id="cartEmpty">Your order is empty — go treat yourself. 🍰</p>
+      <div class="sheet-foot column" id="cartFoot">
+        <div class="cart-total"><span>Total</span><strong id="cartTotal">₹0</strong></div>
+        <p class="cart-taxnote">Final bill may include applicable taxes.</p>
+        <div class="cart-actions">
+          <button type="button" class="btn btn-ghost-dark" id="cartClear">Clear</button>
+          <button type="button" class="btn btn-ghost-dark" id="cartShare">Share / copy</button>
+          <a class="btn btn-whatsapp" id="cartWhatsApp" target="_blank" rel="noopener" hidden>Order on WhatsApp</a>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- Logo mark: cake slice under a layered arch, after the printed menu -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="logo-mark" viewBox="0 0 64 64">
+      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M8 58V30a24 24 0 0 1 48 0v28" />
+        <path d="M14 58V30a18 18 0 0 1 36 0v28" />
+        <path d="M20 58V31a12 12 0 0 1 17-11" />
+        <path d="M40 8c6 4 9 10 8 18-6-2-10-7-8-18Z" />
+        <path d="M18 44l22-9 8 4v9H18z" />
+        <path d="M18 44v10h30V48" />
+        <path d="M22 44c0 3 3 3 3 0M29 41c0 3 3 3 3 0M36 38c0 3 3 3 3 0" />
+        <path d="M6 58h52" />
+      </g>
+    </symbol>
+  </svg>
+
+  <script src="menu.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
