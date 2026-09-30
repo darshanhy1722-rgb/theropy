@@ -38,8 +38,17 @@ window.TherapyOrders = (() => {
 
   async function publish(topic, body) {
     // text/plain body keeps this a "simple" CORS request (no preflight).
-    const res = await fetch(`${server}/`, { method: "POST", body: JSON.stringify({ topic, ...body }) });
-    if (!res.ok) throw new Error(`ntfy ${res.status}`);
+    let res;
+    try {
+      res = await fetch(`${server}/`, { method: "POST", body: JSON.stringify({ topic, ...body }) });
+    } catch (e) {
+      // Blocked by the network/ISP, an ad/content blocker, or offline.
+      throw new Error(`can't connect to ${server.replace(/^https?:\/\//, "")}: ${e.message}`);
+    }
+    if (!res.ok) {
+      const detail = await res.text().catch(() => "");
+      throw new Error(`server said ${res.status}${detail ? ` ${detail.slice(0, 120)}` : ""}`);
+    }
     return res.json();
   }
 

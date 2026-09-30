@@ -392,8 +392,9 @@
       startTracking();
       openTrack();
       if ("Notification" in window && Notification.permission === "default") Notification.requestPermission().catch(() => {});
-    } catch {
-      fail("Couldn't reach the cafe — check your internet and try again, or order at the counter.");
+    } catch (ex) {
+      fail(`Couldn't reach the cafe — check your internet and try again, or order at the counter. (${ex && ex.message ? ex.message : "network error"})`);
+      console.error("Order failed:", ex);
     } finally {
       btn.disabled = false;
       btn.textContent = "Place order";
