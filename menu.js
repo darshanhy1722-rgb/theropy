@@ -31,7 +31,7 @@ window.THERAPY_CONFIG = {
     enabled: true,
     server: "https://ntfy.sh",
     topic: "therapy-hangova-g2br2nio6m18",
-    dineIn: true,    // table orders (QR per table: https://hangova.in/?table=5)
+    dineIn: true,    // table orders (QR per table: <site link>/?table=5)
     takeaway: true,  // parcel / pick-up at the counter
     etaChoices: [5, 10, 15, 20, 30], // minutes staff can pick when accepting
   },

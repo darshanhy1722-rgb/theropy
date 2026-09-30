@@ -19,10 +19,10 @@ Customers can order straight from the menu, and the cafe gets them instantly.
 A live tracker then shows **Sent → Preparing (with a ready-in time) → Ready → Enjoy**, with a sound and vibration when the order is ready. Payment happens at the counter.
 
 **Cafe staff:**
-1. Open **`/staff.html`** (e.g. `https://hangova.in/staff.html`) on the counter tablet or phone and tap **Start receiving orders**.
+1. Open **`/staff.html`** (e.g. `https://darshanhy1722-rgb.github.io/theropy/staff.html`) on the counter tablet or phone and tap **Start receiving orders**.
    New orders appear with a chime that repeats until someone accepts them. Staff tap *Accept · 10′* → *Mark ready* → *Served/Collected*, or *Cancel order* with a reason.
 2. For alerts on phones, even when they're locked, install the free **ntfy** app ([Android](https://play.google.com/store/apps/details?id=io.heckel.ntfy) / [iPhone](https://apps.apple.com/app/ntfy/id1625396347)) and subscribe to the topic shown in the staff page's ⚙️ setup.
-3. **Table QR codes:** link each table to `https://hangova.in/?table=5`, which pre-fills table 5. For takeaway, use the plain link.
+3. **Table QR codes:** link each table to `https://darshanhy1722-rgb.github.io/theropy/?table=5`, which pre-fills table 5. For takeaway, use the plain link.
 
 **Settings** live in `menu.js` → `THERAPY_CONFIG.orders`: turn dine-in or takeaway on and off, change the ETA choices, or set a new `topic` to reset the channel.
 
