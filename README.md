@@ -22,6 +22,15 @@ A live tracker then shows **Sent → Preparing (with a ready-in time) → Ready 
 New orders chime until someone accepts them. Staff tap *Accept · 10′* → *Mark ready* → *Served/Collected*, or *Cancel order* with a reason. The page shows today's order count and sales.
 Optional: forward new orders to staff phones through the free **ntfy** app (see ⚙️ on the staff page).
 
+**Menu & prices (staff):** the staff page's **Menu & prices** tab lets staff:
+- change prices (typed straight into the list)
+- tick **Sold out** (greyed out and can't be ordered) or **Hidden** (removed from the menu)
+- edit names, descriptions, veg/egg/non-veg and labels (Bestseller, New…)
+- **upload photos** from the phone camera or gallery
+- **add new dishes**
+
+Changes show on the customer menu within seconds. `menu.js` stays the original, and **Reset to original** undoes a dish's edits. Photos need Firebase Storage (see [FIREBASE_SETUP.md](FIREBASE_SETUP.md) §7).
+
 **Table QR codes:** link each table to `https://darshanhy1722-rgb.github.io/theropy/?table=5` (change the number), which pre-fills the table number.
 
 **Security** (`firestore.rules`): customers can only create orders and read their own. Only the staff emails listed in the rules can see or update orders.

@@ -32,6 +32,7 @@ window.THERAPY_CONFIG = {
       authDomain: "hangova.firebaseapp.com",
       projectId: "hangova",
       appId: "1:1095182193209:web:8d391ff9a666901f0a73e8",
+      storageBucket: "hangova.firebasestorage.app", // for menu photos
     },
     dineIn: true,    // table orders (QR per table: <site link>/?table=5)
     takeaway: true,  // parcel / pick-up at the counter

@@ -45,7 +45,19 @@ These rules mean customers can only place orders and see their own. Only the sta
 2. On your phone, open the menu, add something, and place an order. It appears on the staff screen with a chime.
 3. Optional: in the staff page ⚙️, follow **Alerts on staff phones** to get notifications through the ntfy app, and tick the box on the counter tablet only.
 
+## 7. Menu photos (Firebase Storage)
+Staff can change prices, mark items sold out or hidden, edit text and add dishes from the **Menu & prices** tab on the staff page. That part works on the free plan. **Photo upload** needs Cloud Storage, which requires the **Blaze** (pay-as-you-go) plan:
+
+1. **Upgrade:** in the bottom-left of the Firebase console, click **Upgrade** → **Blaze** → add a card.
+2. **Set a budget alert:** when asked (or at console.cloud.google.com → Billing → Budgets & alerts), create a budget of **₹100/month** with email alerts. A cafe menu uses a few MB, so the expected bill is **₹0**.
+3. **Create the photo storage:** left menu → **Databases and storage → Storage → Get started**. Choose **US-CENTRAL1** as the location, because the free allowance only applies to US regions. Photos are cached on phones for a year, so the distance doesn't matter. Choose **production mode** → **Create**.
+4. **Paste the photo rules:** on the Storage **Rules** tab, replace everything with [`storage.rules`](storage.rules). Put the same staff email(s) in place of `change-me@example.com`, then click **Publish**.
+5. **Update the database rules:** paste the latest [`firestore.rules`](firestore.rules), with your staff emails, into Firestore → Rules → **Publish** again. They now include the `menu` section.
+
+Photos are shrunk on the phone to about 100 KB before upload, so the menu stays fast on mobile data.
+
 ## Good to know
 - The staff page must stay open, with the screen on, on at least one device to hear orders. It keeps the screen awake by itself.
-- You can see or delete orders any time under **Firestore Database → Data → orders**.
+- You can see or delete orders any time under **Firestore Database → Data → orders**. Staff menu edits are in **menu → live**.
+- **Reset to original** in the staff editor undoes all edits to a dish and brings back the version from `menu.js`.
 - Anyone can still place a fake order, as with any public order form, and staff can cancel it. If this becomes a problem, turn on **Firebase App Check** with reCAPTCHA.

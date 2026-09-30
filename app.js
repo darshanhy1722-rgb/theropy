@@ -4,6 +4,8 @@
   const CFG = window.THERAPY_CONFIG;
   const ORDERS = window.TherapyOrders || { enabled: false };
   const MENU = window.THERAPY_MENU;
+  // Pristine copy of menu.js; staff edits (prices, sold out…) are layered on top.
+  const BASE_MENU = JSON.parse(JSON.stringify(MENU));
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
   const money = (n) => `${CFG.currency}${n.toLocaleString("en-IN")}`;
@@ -14,7 +16,17 @@
 
   // Flat lookup: item id -> { item, cat }
   const INDEX = new Map();
-  MENU.forEach((cat) => cat.items.forEach((item) => INDEX.set(item.id, { item, cat })));
+  let liveKey = "";
+  function applyLive(live) {
+    if (ORDERS.mergeMenu && live) {
+      const merged = ORDERS.mergeMenu(BASE_MENU, live);
+      MENU.forEach((cat, i) => { cat.items = merged[i].items.filter((it) => !it.hidden); });
+    }
+    liveKey = JSON.stringify(live || null);
+    INDEX.clear();
+    MENU.forEach((cat) => cat.items.forEach((item) => INDEX.set(item.id, { item, cat })));
+  }
+  applyLive(ORDERS.cachedLiveMenu ? ORDERS.cachedLiveMenu() : null);
 
   /* ---------------- storage ---------------- */
   const STORE_KEY = "therapy-order-v1";
@@ -30,8 +42,17 @@
   /* ---------------- cart ---------------- */
   // line key = itemId|choice1|choice2  ->  { id, choices: [], qty }
   let cart = store.load();
-  // Drop lines whose items no longer exist on the menu.
-  Object.keys(cart).forEach((k) => { if (!INDEX.has(cart[k].id)) delete cart[k]; });
+  // Drop lines whose items are no longer on the menu or are sold out.
+  function pruneCart() {
+    const removed = [];
+    Object.keys(cart).forEach((k) => {
+      const hit = INDEX.get(cart[k].id);
+      if (!hit || hit.item.soldOut) { removed.push(hit ? hit.item.name : "An item"); delete cart[k]; }
+    });
+    if (removed.length) store.save(cart);
+    return removed;
+  }
+  pruneCart();
 
   const unitPrice = (item, choices = []) => {
     let price = item.price;
@@ -82,6 +103,7 @@
   };
 
   function ctaHTML(item) {
+    if (item.soldOut) return `<span class="soldout-pill">Sold out</span>`;
     const q = qtyOfItem(item.id);
     if (item.options) {
       return `<button class="add-btn" data-open="${item.id}">${q ? `${q} ADDED +` : "ADD +"}</button>`;
@@ -107,7 +129,7 @@
         </header>
         <div class="items">
           ${cat.items.map((item, i) => `
-            <article class="item" data-item="${item.id}" style="animation-delay:${Math.min(i, 6) * 40}ms">
+            <article class="item ${item.soldOut ? "is-soldout" : ""}" data-item="${item.id}" style="animation-delay:${Math.min(i, 6) * 40}ms">
               <div class="item-main">
                 <div class="item-top">${dietDot(item.diet)}${tags(item)}</div>
                 <h3><a href="#${item.id}" data-open="${item.id}" style="text-decoration:none">${esc(item.name)}</a></h3>
@@ -190,10 +212,12 @@
   function updateSheetPrice() {
     const unit = unitPrice(sheetItem, sheetChoices());
     $("#qtyVal").textContent = sheetQty;
-    $("#sheetAdd").textContent = `Add ${sheetQty > 1 ? sheetQty + " " : ""}to order · ${money(unit * sheetQty)}`;
+    $("#sheetAdd").disabled = !!sheetItem.soldOut;
+    $("#sheetAdd").textContent = sheetItem.soldOut ? "Sold out today" : `Add ${sheetQty > 1 ? sheetQty + " " : ""}to order · ${money(unit * sheetQty)}`;
   }
 
   function openSheet(id) {
+    if (!INDEX.has(id)) return;
     const { item, cat } = INDEX.get(id);
     sheetItem = item;
     sheetQty = 1;
@@ -223,6 +247,7 @@
   $("#qtyMinus").addEventListener("click", () => { sheetQty = Math.max(1, sheetQty - 1); updateSheetPrice(); });
   $("#qtyPlus").addEventListener("click", () => { sheetQty = Math.min(20, sheetQty + 1); updateSheetPrice(); });
   $("#sheetAdd").addEventListener("click", () => {
+    if (sheetItem.soldOut) return;
     addLine(sheetItem.id, sheetChoices(), sheetQty);
     toast(`Added ${sheetQty} × ${sheetItem.name}`);
     sheet.close();
@@ -499,7 +524,9 @@
     const add = e.target.closest("[data-add]");
     const dec = e.target.closest("[data-dec]");
     if (add) {
-      const { item } = INDEX.get(add.dataset.add);
+      const hit = INDEX.get(add.dataset.add);
+      if (!hit || hit.item.soldOut) return;
+      const { item } = hit;
       addLine(item.id, []);
       if (qtyOfItem(item.id) === 1) toast(`${item.name} added`);
     } else if (dec) {
@@ -528,7 +555,9 @@
   const onScroll = () => topbar.classList.toggle("is-solid", window.scrollY > hero.offsetHeight - 80);
   window.addEventListener("scroll", onScroll, { passive: true });
 
+  let spy = null;
   function setupScrollSpy() {
+    if (spy) spy.disconnect();
     const links = new Map($$(".cat-link").map((a) => [a.dataset.nav, a]));
     const nav = $("#catNav");
     let current = null;
@@ -544,6 +573,7 @@
       });
     }, { rootMargin: "-45% 0px -50% 0px" });
     $$(".category").forEach((s) => obs.observe(s));
+    spy = obs;
   }
 
   /* ---------------- toast ---------------- */
@@ -566,6 +596,24 @@
     $("#year").textContent = new Date().getFullYear();
   }
 
+  /* ---------------- live menu (staff edits) ---------------- */
+  // Fetch the latest prices / sold-out flags; re-render only if something changed.
+  async function refreshLiveMenu() {
+    if (!ORDERS.fetchLiveMenu) return;
+    let live;
+    try { live = await ORDERS.fetchLiveMenu(); } catch { return; }
+    if (!live || JSON.stringify(live) === liveKey) return;
+    applyLive(live);
+    renderMenu();
+    applyFilters();
+    const removed = pruneCart();
+    refreshCart();
+    setupScrollSpy();
+    if (removed.length) toast(`${removed.join(", ")} ${removed.length > 1 ? "are" : "is"} sold out — removed from your order`);
+  }
+  // Pick up changes when a guest comes back to the tab.
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshLiveMenu(); });
+
   /* ---------------- boot ---------------- */
   renderMenu();
   renderFooter();
@@ -573,6 +621,7 @@
   setupScrollSpy();
   onScroll();
   resumeOrders();
+  refreshLiveMenu();
 
   // Deep link: /#basque opens that item.
   const hashId = location.hash.slice(1);

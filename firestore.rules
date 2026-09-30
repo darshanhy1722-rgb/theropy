@@ -29,6 +29,14 @@ service cloud.firestore {
         && d.at is number;
     }
 
+    // Staff edits to the menu (prices, sold out, photos, new items).
+    // Everyone can read them; only staff can change them.
+    match /menu/{docId} {
+      allow read: if true;
+      allow write: if isStaff() && docId == 'live'
+        && request.resource.data.keys().hasOnly(['items', 'custom', 'updatedAt']);
+    }
+
     match /orders/{orderId} {
       // Customers (anonymous sign-in) can place orders…
       allow create: if request.auth != null && validNewOrder(request.resource.data);
