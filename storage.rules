@@ -1,0 +1,20 @@
+rules_version = '2';
+
+// Copy this whole file into Firebase console → Storage → Rules → Publish.
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Menu photos: anyone can view; only staff can upload, replace or delete.
+    match /menu/{itemId}/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null
+        && request.auth.token.email != null
+        // ✏️ Same staff emails as firestore.rules (lowercase).
+        && request.auth.token.email.lower() in [
+          "change-me@example.com"
+        ]
+        && (request.resource == null   // delete
+            || (request.resource.size < 3 * 1024 * 1024
+                && request.resource.contentType.matches('image/.*')));
+    }
+  }
+}
